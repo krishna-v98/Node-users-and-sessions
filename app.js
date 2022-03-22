@@ -32,15 +32,52 @@ app.get('/', (req, res) => {
     res.render('index');
 });
 
+//render signup page
 app.get('/new', (req, res) => {
     res.render('new');
 });
 
+//post for adding new user
 app.post('/', (req, res, next) => {
     let user = new User(req.body);
     user.save()
         .then(() => {
             res.redirect('/login')
+        })
+        .catch(err => next(err));
+});
+
+//login form render
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+// post login form
+app.post('/login', (req, res) => {
+    //authenticate user's login req
+    let email = req.body.email;
+    let password = req.body.password;
+
+    //get the user that matches the email
+    User.findOne({ email: email })
+        .then(user => {
+            if (user) {
+                //user found as it's not null value
+                user.comparePassword(password) //calling our custom method in user
+                    .then(result => {
+                        if (result)
+                            res.redirect('/profile')
+                        else {
+                            console.log('wrong password')
+                            res.redirect('/login');
+                        }
+                    })
+                    .catch(err => next(err))
+            }
+            else {
+                console.log('wrong email');
+                res.redirect('/login');
+            }
         })
         .catch(err => next(err));
 })
